@@ -133,114 +133,146 @@
   {"uid":106,"country":"korea","store_name":"서라벌마트","owner_name":"서라벌","phone":"821020367399.0","address":"대전광역시 서구 월평로34번길 13 1층","latitude":36.35556453,"longitude":127.3611442,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"honeybee7","invited":null,"L":null},
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
-let markers = [];
+    let markers = [];
     let polylines = [];
     let highlighted = null;
 
-    stores.forEach(store => {
-      if (!store.latitude || !store.longitude) return;
+fetch('data.json')
+      .then(r => r.json())
+      .then(stores => {
+        stores.forEach(store => {
+          if (!store.latitude || !store.longitude) return;
 
       const phone = store.phone 
         ? '010-' + store.phone.replace('8210', '').replace('.0', '').replace(/(\d{4})(\d{4})/, '$1-$2')
         : '미기재';
 
-      const recommendBtn = store.invited ? `
-        <button onclick="showRecommendations('${store.verychat_id}')" 
-                style="margin-top:12px;background:#ff69b4;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;">
-          추천현황 보기
-        </button>
-      ` : '';
+// 추천현황 버튼 (자신이 누군가를 초대했을 때만)
+          const recommendBtn = store.invited ? `
+            <button onclick="alert('이 매장은 ${store.invited}에게 초대받았습니다.')" 
+                    style="margin-top:12px;background:#ff69b4;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;">
+              추천현황 보기
+            </button>
+          ` : '';
 
-      const popup = new maptilersdk.Popup({ offset: 25, closeButton: true })
-        .setHTML(`
-          <div style="font-family:sans-serif;min-width:280px;padding:10px;">
-            <h3 style="margin:0 0 12px;color:#3366ff;font-size:20px;font-weight:bold;">${store.store_name}</h3>
-            <p style="margin:6px 0;font-size:15px;"><b>대표자:</b> ${store.owner_name || '미기재'}</p>
-            <p style="margin:6px 0;font-size:15px;"><b>연락처:</b> ${phone}</p>
-            <p style="margin:6px 0 15px;font-size:14px;color:#555;"><b>주소:</b> ${store.address}</p>
-            ${recommendBtn}
-          </div>
-        `);
+const popup = new maptilersdk.Popup({ offset: 15, closeButton: true })
+            .setHTML(`
+              <div style="background:white;padding:16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);min-width:260px;font-family:sans-serif;">
+                <h3 style="margin:0 0 10px;color:#3366ff;font-size:18px;font-weight:bold;">${store.store_name}</h3>
+                <p style="margin:5px 0;font-size:14px;"><b>대표자: <b>${store.owner_name || '미기재'}</b></p>
+                <p style="margin:5px 0;font-size:14px;"><b>연락처:</b> ${phone}</p>
+                <p style="margin:5px 0 12px;font-size:14px;color:#555;line-height:1.4;"><b>주소:</b> ${store.address}</p>
+                ${recommendBtn}
+              </div>
+            `);
 
-      let iconUrl = '';
-      if (store.logo_url === 'https://imgur.com/s6SNXa3') iconUrl = 'https://i.imgur.com/s6SNXa3.jpg';
-      else if (store.logo_url === 'https://imgur.com/dA6Up2i') iconUrl = 'https://i.imgur.com/dA6Up2i.jpg';
-      else if (store.logo_url === 'https://imgur.com/DwZW4bs') iconUrl = 'https://i.imgur.com/DwZW4bs.jpg';
-      else if (store.logo_url && store.logo_url.includes('imgur.com')) {
-        iconUrl = store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg';
-      } else {
-        const svg = encodeURIComponent(`
-          <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="19" fill="#3366ff"/>
-            <text x="20" y="25" font-family="sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold">
-              ${store.store_name.substring(0,2)}
-            </text>
-          </svg>
-        `);
-        iconUrl = 'data:image/svg+xml,' + svg;
-      }
+// 로고 URL
+          let iconUrl = '';
+          if (store.logo_url?.includes('imgur.com')) {
+            iconUrl = store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg';
+          } else {
+            const svg = encodeURIComponent(`
+              <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="15" cy="15" r="14" fill="#3366ff"/>
+                <text x="15" y="19" font-size="14" fill="white" text-anchor="middle" font-weight="bold">
+                  ${store.store_name.substring(0,2)}
+                </text>
+              </svg>
+            `);
+            iconUrl = 'data:image/svg+xml,' + svg;
+          }
 
-      const marker = new maptilersdk.Marker({
-        element: (() => {
-          const div = document.createElement('div');
-          div.innerHTML = `<img src="${iconUrl}" style="width:40px;height:40px;border-radius:50%;box-shadow:0 3px 12px rgba(0,0,0,0.5);pointer-events:none;">`;
-          return div.firstChild;
-        })(),
-        anchor: 'center'
-      })
-      .setLngLat([store.longitude, store.latitude])
-      .setPopup(popup)
-      .addTo(map);
-
-      markers.push({ marker, store });
-    });
-
-    // 전국 자동 줌
-    const bounds = new maptilersdk.LngLatBounds();
-    stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
-    map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 1500 });
-
-    window.showRecommendations = function(id) {
-      polylines.forEach(l => l.remove());
-      polylines = [];
-      markers.forEach(m => m.marker.getElement().style.transform = 'scale(1)');
-
-      if (highlighted === id) { highlighted = null; return; }
-      highlighted = id;
-
-      const parent = markers.find(m => m.store.verychat_id === id);
-      if (!parent) return;
-
-      const children = markers.filter(m => m.store.invited === id);
-
-      children.forEach(child => {
-        child.marker.getElement().style.transform = 'scale(1.35)';
-
-        const line = document.createElement('div');
-        line.style.position = 'absolute';
-        line.style.background = '#ff69b4';
-        line.style.height = '3px';
-        line.style.opacity = '0.8';
-        line.style.pointerEvents = 'none';
-        line.style.boxShadow = '0 0 12px #ff69b4';
-
-        const dx = child.store.longitude - parent.store.longitude;
-        const dy = child.store.latitude - parent.store.latitude;
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        const length = Math.sqrt(dx*dx + dy*dy) * 400000;
-
-        line.style.width = length + 'px';
-        line.style.transform = `rotate(${angle}deg)`;
-        line.style.transformOrigin = '0 0';
-
-        const lineMarker = new maptilersdk.Marker({ element: line })
-          .setLngLat([parent.store.longitude, parent.store.latitude])
+// 마커 생성 (20px 기반, 50% 작게)
+          const marker = new maptilersdk.Marker({
+            element: (() => {
+              const div = document.createElement('div');
+              div.innerHTML = `<img src="${iconUrl}" style="width:30px;height:30px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid white;pointer-events:auto;cursor:pointer;">`;
+              return div.firstChild;
+            })(),
+            anchor: 'center'
+          })
+          .setLngLat([store.longitude, store.latitude])
+          .setPopup(popup)
           .addTo(map);
-        polylines.push(lineMarker);
+
+          const el = marker.getElement();
+
+    // 마우스 올렸을 때 추천 네트워크 강조
+          el.addEventListener('mouseenter', () => {
+            if (hoveredId === store.verychat_id) return;
+            clearLines();
+
+            // 본인 마커 키우기
+            el.style.transform = 'scale(1.4)';
+            el.style.zIndex = '1000';
+
+            // 추천받은 매장들 찾기 (invited가 본인 verychat_id인 애들)
+            const invitedByMe = stores.filter(s => s.invited === store.verychat_id);
+
+            invitedByMe.forEach(child => {
+              const childMarker = markers.find(m => m.store.verychat_id === child.verychat_id);
+              if (childMarker) {
+                childMarker.marker.getElement().style.transform = 'scale(1.4)';
+                childMarker.marker.getElement().style.zIndex = '999';
+
+                // 연핑크색 선 그리기
+                drawLine(store, child);
+              }
+            });
+
+            hoveredId = store.verychat_id;
+          });
+
+          el.addEventListener('mouseleave', () => {
+            if (hoveredId !== store.verychat_id) return;
+            clearLines();
+            markers.forEach(m => {
+              m.marker.getElement().style.transform = 'scale(1)';
+              m.marker.getElement().style.zIndex = '';
+            });
+            hoveredId = null;
+          });
+
+          markers.push({ marker, store });
+        });
+
+        // 전국 자동 줌
+        const bounds = new maptilersdk.LngLatBounds();
+        stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
+        map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
       });
 
-      parent.marker.getElement().style.transform = 'scale(1.2)';
-    };
+    // 선 그리기 함수
+    function drawLine(from, to) {
+      const line = document.createElement('div');
+      line.style.position = 'absolute';
+      line.style.background = '#ffb6c1';
+      line.style.height = '2px';
+      line.style.opacity = '0.7';
+      line.style.pointerEvents = 'none';
+      line.style.boxShadow = '0 0 8px #ffb6c1';
+
+      const dx = to.longitude - from.longitude;
+      const dy = to.latitude - from.latitude;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const length = Math.sqrt(dx*dx + dy*dy) * 400000;
+
+      line.style.width = length + 'px';
+      line.style.transform = `rotate(${angle}deg)`;
+      line.style.transformOrigin = '0 0';
+
+      const lineMarker = new maptilersdk.Marker({ element: line })
+        .setLngLat([from.longitude, from.latitude])
+        .addTo(map);
+
+      currentLines.push(lineMarker);
+    }
+
+    // 선 지우기
+    function clearLines() {
+      currentLines.forEach(l => l.remove());
+      currentLines = [];
+    }
   </script>
 </body>
 </html>
