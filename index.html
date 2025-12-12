@@ -111,7 +111,7 @@
   {"uid":84,"country":"korea","store_name":"주몽투어","owner_name":"윤영인","phone":"821099862291.0","address":"서울특별시 동대문구 왕산로32길 7 BYC 오피스텔 2212","latitude":37.57872962,"longitude":127.0417962,"logo_url":"https://imgur.com/s6SNXa3","verychat_id":"jumong","invited":null,"L":null},
   {"uid":85,"country":"korea","store_name":"레드우드","owner_name":"이가락","phone":"821053696483.0","address":"강원특별자치도 춘천시 동산면 조양1길 39","latitude":37.74754982,"longitude":127.8030093,"logo_url":"https://imgur.com/DwZW4bs","verychat_id":"garak3840","invited":null,"L":null},
   {"uid":86,"country":"korea","store_name":"대마돈가 만천1호점","owner_name":"전종열","phone":"821050268982.0","address":"강원특별자치도 춘천시 동면 만천로81 1층","latitude":37.879805,"longitude":127.764755,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"cheon1113","invited":"garak3840","L":null},
-  {"uid":87,"country":"korea","store_name":"연흥","owner_name":"이태연","phone":"821036683522.0","address":"경기도 김포시 대곶면 오니산로 52","latitude":37.667347,"longitude":127.8030093,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"Yh218480","invited":"garak3840 ","L":null},
+  {"uid":87,"country":"korea","store_name":"연흥","owner_name":"이태연","phone":"821036683522.0","address":"경기도 김포시 대곶면 오니산로 52","latitude":37.667339,"longitude":126.603272,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"Yh218480","invited":"garak3840 ","L":null},
   {"uid":88,"country":"korea","store_name":"성남컴퓨터서비스","owner_name":"기종진","phone":"821037639524.0","address":"경기도 성남시 중원구 하대원동 132-6번지 1층 위더스컴퓨터","latitude":37.430283,"longitude":127.150398,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"kjj9524","invited":null,"L":null},
   {"uid":89,"country":"korea","store_name":"위더스 컴퓨터","owner_name":"윤남식","phone":"821082954882.0","address":"경기도 성남시 중원구 둔촌대로 425번길 19, 1층 위더스컴퓨터","latitude":37.434741,"longitude":127.164068,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"withus","invited":"kjj9524","L":null},
   {"uid":90,"country":"korea","store_name":"삽교곱창 하대원점","owner_name":"김미정","phone":"821029822313.0","address":"경기도 성남시 중원구 둔촌대로 287, 105호","latitude":37.43001,"longitude":127.149986,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"kimmijeng","invited":"kjj9524","L":null},
@@ -133,146 +133,148 @@
   {"uid":106,"country":"korea","store_name":"서라벌마트","owner_name":"서라벌","phone":"821020367399.0","address":"대전광역시 서구 월평로34번길 13 1층","latitude":36.35556453,"longitude":127.3611442,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"honeybee7","invited":null,"L":null},
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
-    let markers = [];
-    let polylines = [];
-    let highlighted = null;
+// ← 기존 마커 생성 + 추천 함수 전부 지우고 이 코드로 완전 교체!
 
-fetch('data.json')
-      .then(r => r.json())
-      .then(stores => {
-        stores.forEach(store => {
-          if (!store.latitude || !store.longitude) return;
+let markers = [];
+let currentLines = [];
+let currentHighlight = null;
 
-      const phone = store.phone 
-        ? '010-' + store.phone.replace('8210', '').replace('.0', '').replace(/(\d{3,4})(\d{4})/, '$1-$2')
-        : '미기재';
+stores.forEach(store => {
+  if (!store.latitude || !store.longitude) return;
 
-// 추천현황 버튼 (자신이 누군가를 초대했을 때만)
-          const recommendBtn = store.invited ? `
-            <button onclick="alert('이 매장은 ${store.invited}에게 초대받았습니다.')" 
-                    style="margin-top:12px;background:#ff69b4;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;">
-              추천현황 보기
-            </button>
-          ` : '';
+  const phone = store.phone 
+    ? '010-' + store.phone.replace('8210', '').replace('.0', '').replace(/(\d{3,4})(\d{4})/, '$1-$2')
+    : '미기재';
 
-const popup = new maptilersdk.Popup({ offset: 15, closeButton: true })
-            .setHTML(`
-              <div style="background:white;padding:16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);min-width:260px;font-family:sans-serif;">
-                <h3 style="margin:0 0 10px;color:#3366ff;font-size:18px;font-weight:bold;">${store.store_name}</h3>
-                <p style="margin:5px 0;font-size:14px;"><b>대표자: <b>${store.owner_name || '미기재'}</b></p>
-                <p style="margin:5px 0;font-size:14px;"><b>연락처:</b> ${phone}</p>
-                <p style="margin:5px 0 12px;font-size:14px;color:#555;line-height:1.4;"><b>주소:</b> ${store.address}</p>
-                ${recommendBtn}
-              </div>
-            `);
+  // 내가 추천한 매장들 찾기
+  const myInvited = stores.filter(s => s.invited === store.verychat_id);
+  const invitedCount = myInvited.length;
 
-// 로고 URL
-          let iconUrl = '';
-          if (store.logo_url?.includes('imgur.com')) {
-            iconUrl = store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg';
-          } else {
-            const svg = encodeURIComponent(`
-              <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="15" cy="15" r="14" fill="#3366ff"/>
-                <text x="15" y="19" font-size="14" fill="white" text-anchor="middle" font-weight="bold">
-                  ${store.store_name.substring(0,2)}
-                </text>
-              </svg>
-            `);
-            iconUrl = 'data:image/svg+xml,' + svg;
-          }
+  // 추천현황 리스트 HTML
+  const invitedListHTML = invitedCount > 0 ? `
+    <div style="margin-top:15px;padding-top:12px;border-top:1px solid #eee;">
+      <p style="margin:0 0 8px 0;font-weight:bold;color:#ff69b4;">내가 추천한 매장 (${invitedCount}곳)</p>
+      ${myInvited.map(s => `
+        <div style="margin:4px 0;font-size:13px;">
+          <b>${s.store_name}</b> <span style="color:#ff69b4;">@${s.verychat_id}</span>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
 
-// 마커 생성 (20px 기반, 50% 작게)
-          const marker = new maptilersdk.Marker({
-            element: (() => {
-              const div = document.createElement('div');
-              div.innerHTML = `<img src="${iconUrl}" style="width:30px;height:30px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid white;pointer-events:auto;cursor:pointer;">`;
-              return div.firstChild;
-            })(),
-            anchor: 'center'
-          })
-          .setLngLat([store.longitude, store.latitude])
-          .setPopup(popup)
-          .addTo(map);
+  const popup = new maptilersdk.Popup({ offset: 20, closeButton: true })
+    .setHTML(`
+      <div style="background:white;padding:16px;border-radius:14px;box-shadow:0 6px 25px rgba(0,0,0,0.2);min-width:300px;font-family:sans-serif;">
+        <h3 style="margin:0 0 12px;color:#3366ff;font-size:19px;font-weight:bold;">${store.store_name}</h3>
+        <p style="margin:5px 0;font-size:14px;"><b>대표자:</b> ${store.owner_name || '미기재'} <span style="color:#ff69b4;font-weight:bold;">@${store.verychat_id}</span></p>
+        <p style="margin:5px 0;font-size:14px;"><b>연락처:</b> ${phone}</p>
+        <p style="margin:5px 0 15px;font-size:14px;color:#555;line-height:1.5;"><b>주소:</b> ${store.address}</p>
+        ${invitedListHTML}
+      </div>
+    `);
 
-          const el = marker.getElement();
+  let iconUrl = '';
+  if (store.logo_url?.includes('imgur.com')) {
+    iconUrl = store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg';
+  } else {
+    const svg = encodeURIComponent(`
+      <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="15" cy="15" r="14" fill="#3366ff"/>
+        <text x="15" y="19" font-size="14" fill="white" text-anchor="middle" font-weight="bold">
+          ${store.store_name.substring(0,2)}
+        </text>
+      </svg>
+    `);
+    iconUrl = 'data:image/svg+xml,' + svg;
+  }
 
-    // 마우스 올렸을 때 추천 네트워크 강조
-          el.addEventListener('mouseenter', () => {
-            if (hoveredId === store.verychat_id) return;
-            clearLines();
+  const marker = new maptilersdk.Marker({
+    element: (() => {
+      const div = document.createElement('div');
+      div.innerHTML = `<img src="${iconUrl}" style="width:30px;height:30px;border-radius:50%;box-shadow:0 3px 12px rgba(0,0,0,0.5);border:2px solid white;display:block;pointer-events:auto;cursor:pointer;transition:transform 0.3s;">`;
+      return div.firstChild;
+    })(),
+    anchor: 'center'
+  })
+  .setLngLat([store.longitude, store.latitude])
+  .setPopup(popup)
+  .addTo(map);
 
-            // 본인 마커 키우기
-            el.style.transform = 'scale(1.4)';
-            el.style.zIndex = '1000';
+  const el = marker.getElement();
 
-            // 추천받은 매장들 찾기 (invited가 본인 verychat_id인 애들)
-            const invitedByMe = stores.filter(s => s.invited === store.verychat_id);
+  // 마우스 오버 → 내가 추천한 매장들 강조
+  el.addEventListener('mouseenter', () => {
+    if (currentHighlight === store.verychat_id) return;
+    clearHighlight();
 
-            invitedByMe.forEach(child => {
-              const childMarker = markers.find(m => m.store.verychat_id === child.verychat_id);
-              if (childMarker) {
-                childMarker.marker.getElement().style.transform = 'scale(1.4)';
-                childMarker.marker.getElement().style.zIndex = '999';
+    el.style.transform = 'scale(1.5)';
+    el.style.zIndex = '1000';
 
-                // 연핑크색 선 그리기
-                drawLine(store, child);
-              }
-            });
+    myInvited.forEach(child => {
+      const childMarker = markers.find(m => m.store.verychat_id === child.verychat_id);
+      if (childMarker) {
+        childMarker.marker.getElement().style.transform = 'scale(1.35)';
+        childMarker.marker.getElement().style.zIndex = '999';
+        drawLine(store, child);
+      }
+    });
 
-            hoveredId = store.verychat_id;
-          });
+    currentHighlight = store.verychat_id;
+  });
 
-          el.addEventListener('mouseleave', () => {
-            if (hoveredId !== store.verychat_id) return;
-            clearLines();
-            markers.forEach(m => {
-              m.marker.getElement().style.transform = 'scale(1)';
-              m.marker.getElement().style.zIndex = '';
-            });
-            hoveredId = null;
-          });
+  el.addEventListener('mouseleave', () => {
+    if (currentHighlight !== store.verychat_id) return;
+    clearHighlight();
+  });
 
-          markers.push({ marker, store });
-        });
+  markers.push({ marker, store });
+});
 
-        // 전국 자동 줌
-        const bounds = new maptilersdk.LngLatBounds();
-        stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
-        map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
-      });
+// 선 그리기
+function drawLine(from, to) {
+  const line = document.createElement('div');
+  line.style.position = 'absolute';
+  line.style.background = '#ffb6c1';
+  line.style.height = '2.5px';
+  line.style.opacity = '0.8';
+  line.style.pointerEvents = 'none';
+  line.style.boxShadow = '0 0 10px #ffb6c1';
 
-    // 선 그리기 함수
-    function drawLine(from, to) {
-      const line = document.createElement('div');
-      line.style.position = 'absolute';
-      line.style.background = '#ffb6c1';
-      line.style.height = '2px';
-      line.style.opacity = '0.7';
-      line.style.pointerEvents = 'none';
-      line.style.boxShadow = '0 0 8px #ffb6c1';
+  const dx = to.longitude - from.longitude;
+  const dy = to.latitude - from.latitude;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const length = Math.sqrt(dx*dx + dy*dy) * 400000;
 
-      const dx = to.longitude - from.longitude;
-      const dy = to.latitude - from.latitude;
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      const length = Math.sqrt(dx*dx + dy*dy) * 400000;
+  line.style.width = length + 'px';
+  line.style.transform = `rotate(${angle}deg)`;
+  line.style.transformOrigin = '0 0';
 
-      line.style.width = length + 'px';
-      line.style.transform = `rotate(${angle}deg)`;
-      line.style.transformOrigin = '0 0';
+  const lineMarker = new maptilersdk.Marker({ element: line })
+    .setLngLat([from.longitude, from.latitude])
+    .addTo(map);
 
-      const lineMarker = new maptilersdk.Marker({ element: line })
-        .setLngLat([from.longitude, from.latitude])
-        .addTo(map);
+  currentLines.push(lineMarker);
+}
 
-      currentLines.push(lineMarker);
-    }
+// 강조 해제
+function clearHighlight() {
+  currentLines.forEach(l => l.remove());
+  currentLines = [];
+  markers.forEach(m => {
+    m.marker.getElement().style.transform = 'scale(1)';
+    m.marker.getElement().style.zIndex = '';
+  });
+  currentHighlight = null;
+}
 
-    // 선 지우기
-    function clearLines() {
-      currentLines.forEach(l => l.remove());
-      currentLines = [];
-    }
+// 지도 클릭 시 강조 해제
+map.getCanvas().style.cursor = 'default';
+map.getCanvas().addEventListener('click', () => clearHighlight());
+
+// 전국 자동 줌
+const bounds = new maptilersdk.LngLatBounds();
+stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
+map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
   </script>
 </body>
 </html>
