@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <title>verycrew for veryhunt</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.4.0/maptiler-sdk.css" rel="stylesheet" />
-  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.4.0/maptiler-sdk.umd.min.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
   <style>
     body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family: 'Malgun Gothic, sans-serif; }
     #container { position:fixed; top:68px; left:0; right:0; bottom:0; display:flex; flex-direction:column; }
@@ -96,10 +96,10 @@
 
 <script>
   // 지도 초기화
-  maptilersdk.config.apiKey = 'wlAGSeTuUCbvwxWtQtEi';
-  const map = new maptilersdk.Map({
+maplibregl.accessToken = 'wlAGSeTuUCbvwxWtQtEi';
+const map = new maplibregl.Map({
     container: 'map',
-    style: maptilersdk.MapStyle.STREETS,
+    style: 'https://api.maptiler.com/maps/streets/style.json?key=wlAGSeTuUCbvwxWtQtEi',
     center: [127.8, 36.0],
     zoom: 7
   });
