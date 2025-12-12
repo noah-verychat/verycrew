@@ -6,22 +6,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.4.0/maptiler-sdk.css" rel="stylesheet" />
   <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.4.0/maptiler-sdk.umd.min.js"></script>
-  <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family: 'Malgun Gothic', sans-serif; }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family: 'Malgun Gothic, sans-serif; }
     #container { position:fixed; top:68px; left:0; right:0; bottom:0; display:flex; flex-direction:column; }
-    #lineupArea { width:100%; height:0; overflow:hidden; transition:height 0.4s ease; background:#fff; }
-    #lineupContent { width:100%; height:100%; padding:20px; box-sizing:border-box; overflow:auto; }
-    #lineupContent table { width:100%; border-collapse:collapse; font-size:14px; }
-    #lineupContent th, #lineupContent td { padding:12px 10px; text-align:left; border-bottom:1px solid #eee; }
-    #lineupContent th { background:#f0f0f0; font-weight:bold; position:sticky; top:0; z-index:5; }
+    #lineupArea { width:100%; height:0; overflow:hidden; transition:height 0.5s ease; background:#f8f9fa; }
+    #lineupTable { width:100%; height:100%; border-collapse:collapse; font-size:14px; }
+    #lineupTable th, #lineupTable td { 
+      border:1px solid #ddd; padding:10px; text-align:center; 
+      min-width:80px; height:40px; 
+    }
+    #lineupTable th { background:#ff3366; color:white; font-weight:bold; position:sticky; top:0; z-index:5; }
+    #lineupTable input { 
+      width:100%; height:100%; border:none; padding:0 8px; box-sizing:border-box; 
+      background:transparent; text-align:center; font-size:14px;
+    }
     #dragHandle {
       height:12px; background:#ddd; cursor:ns-resize; z-index:10;
       display:flex; align-items:center; justify-content:center; font-weight:bold; color:#666;
     }
-    #dragHandle::before { content:"VeryCrew Lineup 보기"; font-size:14px; }
+    #dragHandle::before { content:"VeryCrew Lineup 편집 모드"; font-size:14px; }
     #dragHandle:hover { background:#ff3366; }
-    #dragHandle:hover::before { content:"줄을 아래로 당기세요"; color:white; }
+    #dragHandle:hover::before { content:"줄을 아래로 당겨 편집하세요"; color:white; }
     #map { width:100%; flex:1; }
     .tab-btn {
       background:none; border:none; font-size:18px; font-weight:600; color:#666;
@@ -32,6 +37,12 @@
       border-bottom:4px solid #ff3366 !important; border-radius:4px;
     }
     .tab-btn:hover { color:#333; }
+    #saveBtn {
+      position:absolute; top:80px; right:20px; z-index:100;
+      padding:10px 20px; background:#ff3366; color:white; border:none;
+      border-radius:10px; font-size:16px; cursor:pointer; box-shadow:0 4px 15px rgba(255,51,102,0.3);
+    }
+    #saveBtn:hover { background:#e62e5a; }
   </style>
 </head>
 <body>
@@ -39,7 +50,7 @@
 <!-- 상단바 -->
 <header style="position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,0.98);backdrop-filter:blur(15px);box-shadow:0 4px 20px rgba(0,0,0,0.08);z-index:9999;display:flex;align-items:center;justify-content:center;padding:0 40px;">
   <div style="display:flex;align-items:center;gap:60px;">
-    <img src="https://i.imgur.com/4G2AsbN.png" alt="VeryCrew Logo" style="height:48px;border-radius:10px;">
+    <img src="https://i.imgur.com/4G2AsbN.png" alt="Logo" style="height:48px;border-radius:10px;">
     <nav style="display:flex;gap:40px;">
       <button id="tabMap" class="tab-btn active">Map</button>
       <button id="tabLineup" class="tab-btn">Lineup</button>
@@ -48,17 +59,29 @@
   </div>
 </header>
 
+<!-- 저장 버튼 (Lineup에서만 보임) -->
+<button id="saveBtn" style="display:none;">저장하기</button>
+
 <!-- 컨테이너 -->
 <div id="container">
-  <!-- Lineup 영역 (초기엔 숨김) -->
+  <!-- Lineup 영역 -->
   <div id="lineupArea">
-    <div id="lineupContent">
-      <div style="text-align:center;padding:80px 20px;color:#888;">
-        <p style="font-size:18px;">VeryCrew Lineup</p>
-        <p style="font-size:14px;margin-top:10px;">Lineup 버튼을 눌러 실시간 데이터를 확인하세요</p>
-        <div style="margin-top:20px;">
-          <img src="https://i.imgur.com/4G2AsbN.png" style="height:60px;border-radius:12px;opacity:0.7;">
-        </div>
+    <div style="padding:20px; height:100%; box-sizing:border-box; overflow:auto;">
+      <table id="lineupTable">
+        <thead>
+          <tr>
+            <th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- 여기부터 직접 붙여넣기 시작 -->
+          <tr><td contenteditable>1</td><td contenteditable>주.에스아이셀센터</td><td contenteditable>윤차식</td><td contenteditable>010-3887-9451</td><td contenteditable>경남 진주시 동부로169번길 12</td><td contenteditable>가입</td><td contenteditable></td></tr>
+          <tr><td contenteditable>2</td><td contenteditable>(주)여행조아</td><td contenteditable>유정은</td><td contenteditable>010-6300-2523</td><td contenteditable>경남 진주시 남강로 597-1</td><td contenteditable>가입</td><td contenteditable></td></tr>
+          <!-- 여기까지 원하는 만큼 직접 복붙해서 채워넣기 -->
+        </tbody>
+      </table>
+      <div style="text-align:center;margin:30px 0;color:#888;">
+        <p>원하는 만큼 행 추가 가능 • 더블클릭해서 수정 • 저장 버튼으로 다운로드</p>
       </div>
     </div>
     <div id="dragHandle"></div>
@@ -72,21 +95,23 @@
 <div id="invitedModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.92);padding:24px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);max-width:90%;max-height:85%;overflow-y:auto;z-index:10000;font-family:sans-serif;backdrop-filter:blur(8px);"></div>
 
 <script>
+  // 지도 초기화
+  maptilersdk
   maptilersdk.config.apiKey = 'wlAGSeTuUCbvwxWtQtEi';
   const map = new maptilersdk.Map({
-    container: 'map'
+    container: 'map',
     style: maptilersdk.MapStyle.STREETS,
     center: [127.8, 36.0],
     zoom: 7
   });
 
   const sheetArea = document.getElementById('lineupArea');
-  const content = document.getElementById('lineupContent');
-  const handle = document.getElementById('dragHandle');
+  const dragHandle = document.getElementById('dragHandle');
+  const saveBtn = document.getElementById('saveBtn');
   let isDragging = false;
 
-  // 드래그 기능
-  handle.addEventListener('mousedown', e => { isDragging = true; e.preventDefault(); });
+  // 드래그
+  dragHandle.addEventListener('mousedown', e => { isDragging = true; e.preventDefault(); });
   document.addEventListener('mousemove', e => {
     if (!isDragging) return;
     const rect = document.getElementById('container').getBoundingClientRect();
@@ -96,59 +121,43 @@
   });
   document.addEventListener('mouseup', () => isDragging = false);
 
-  // Google Sheets API로 데이터 불러오기
-  function loadLineupData() {
-    content.innerHTML = '<div style="text-align:center;padding:100px;color:#666;">Lineup 로딩 중...</div>';
-    
-    gapi.load('client', () => {
-      gapi.client.init({
-        apiKey: 'AIzaSyD8i3bL9vN8K9j7kL5mN2pQ1rT3vX5yZ7A', // ← 여기만 너의 API 키로 바꾸면 됨!
-        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-      }).then(() => {
-        return gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: '1bhZrwuOMYihn-T6hy2g2tKKXLYwuc0_GBucZq1s61mg',
-          range: '시트1!A1:Z1000', // 필요시 범위 조정 (예: A1:Z1000)
-        });
-      }).then(response => {
-        const values = response.result.values;
-        if (!values || values.length === 0) {
-          content.innerHTML = '<div style="text-align:center;padding:100px;color:#c33;">데이터가 없습니다</div>';
-          return;
-        }
-
-        let html = '<table>';
-        values.forEach((row, i) => {
-          html += '<tr>';
-          row.forEach(cell => {
-            html += `<td style="${i===0?'background:#ff3366;color:white;font-weight:bold;':''}">${cell || ''}</td>`;
-          });
-          html += '</tr>';
-        });
-        html += '</table>';
-        content.innerHTML = html;
-      }).catch(() => {
-        content.innerHTML = '<div style="text-align:center;padding:100px;color:#c33;">Lineup을 불러올 수 없습니다<br>잠시 후 다시 시도해주세요</div>';
-      });
-    });
-  }
-
   // 탭 전환
   document.getElementById('tabMap').onclick = () => {
     sheetArea.style.height = '0';
+    saveBtn.style.display = 'none';
     document.getElementById('tabMap').classList.add('active');
     document.getElementById('tabLineup').classList.remove('active');
   };
 
   document.getElementById('tabLineup').onclick = () => {
-    sheetArea.style.height = '60%';
+    sheetArea.style.height = '70%';
+    saveBtn.style.display = 'block';
     document.getElementById('tabMap').classList.remove('active');
     document.getElementById('tabLineup').classList.add('active');
-    
-    // 첫 클릭일 때만 데이터 로드
-    if (!window.lineupLoaded) {
-      loadLineupData();
-      window.lineupLoaded = true;
-    }
+  };
+
+  // 저장 기능 (엑셀 형식으로 다운로드)
+  saveBtn.onclick = () => {
+    let csv = [];
+    const rows = document.querySelectorAll('#lineupTable tr');
+    rows.forEach(row => {
+      let rowData = [];
+      row.querySelectorAll('td, th').forEach(cell => {
+        rowData.push(cell.innerText.trim());
+      });
+      csv.push(rowData.join('\t')); // 탭으로 구분 → 엑셀에서 잘 열림
+    });
+    const csvContent = csv.join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'VeryCrew_Lineup_' + new Date().toISOString().slice(0,10) + '.xls');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    alert('저장 완료! 엑셀 파일이 다운로드됩니다');
   };
 
   // 너의 기존 마커 + 초대현황 코드 그대로 아래에 붙이면 됩니다!
@@ -263,11 +272,10 @@ const stores = [
   {"uid":106,"country":"korea","store_name":"서라벌마트","owner_name":"서라벌","phone":"821020367399.0","address":"대전광역시 서구 월평로34번길 13 1층","latitude":36.35556453,"longitude":127.3611442,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"honeybee7","invited":null,"L":null},
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
-// ← 기존 마커 생성 + 추천 함수 전부 지우고 이 코드로 완전 교체!
-// ← 여기부터 너의 기존 마커 생성 코드 그대로 복붙 ↓
-  let markers = [];
+let markers = [];
   let currentLines = [];
   let hoveredId = null;
+
   stores.forEach(store => {
     if (!store.latitude || !store.longitude) return;
     const phone = store.phone
@@ -312,16 +320,92 @@ const stores = [
     .setPopup(popup)
     .addTo(map);
     const el = marker.getElement();
-    el.addEventListener('mouseenter', () => { /* 기존 코드 그대로 */ });
-    el.addEventListener('mouseleave', () => { /* 기존 코드 그대로 */ });
+    el.addEventListener('mouseenter', () => {
+      if (hoveredId === store.verychat_id) return;
+      clearLines();
+      el.style.transform = 'scale(1.4)';
+      el.style.zIndex = '1000';
+      const invitedByMe = stores.filter(s => s.invited === store.verychat_id);
+      invitedByMe.forEach(child => {
+        const childMarker = markers.find(m => m.store.verychat_id === child.verychat_id);
+        if (childMarker) {
+          childMarker.marker.getElement().style.transform = 'scale(1.35)';
+          childMarker.marker.getElement().style.zIndex = '999';
+          drawLine(store, child);
+        }
+      });
+      hoveredId = store.verychat_id;
+    });
+    el.addEventListener('mouseleave', () => {
+      if (hoveredId !== store.verychat_id) return;
+      clearLines();
+      markers.forEach(m => m.marker.getElement().style.transform = 'scale(1)');
+      hoveredId = null;
+    });
     markers.push({ marker, store });
   });
-  // ← 여기까지 기존 마커 코드 복붙
 
-  // 지도 초기화
+  function drawLine(from, to) {
+    const midLng = (from.longitude + to.longitude) / 2;
+    const midLat = (from.latitude + to.latitude) / 2;
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.background = '#ffb6c1';
+    line.style.height = '3px';
+    line.style.opacity = '0.85';
+    line.style.pointerEvents = 'none';
+    line.style.boxShadow = '0 0 12px #ffb6c1';
+    line.style.transformOrigin = 'left center';
+    const dx = (to.longitude - from.longitude) * 111320;
+    const dy = (to.latitude - from.latitude) * 111320;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    line.style.width = distance + 'px';
+    line.style.transform = `rotate(${angle}deg)`;
+    const lineMarker = new maptilersdk.Marker({
+      element: line,
+      anchor: 'center',
+      offset: [-distance / 2, 0]
+    })
+    .setLngLat([from.longitude, from.latitude])
+    .addTo(map);
+    currentLines.push(lineMarker);
+  }
+
+  function clearLines() {
+    currentLines.forEach(l => l.remove());
+    currentLines = [];
+  }
+
+  // 초대현황 모달
+  window.showInvitedList = function(inviterId, inviterName) {
+    const invited = stores.filter(s => s.invited === inviterId);
+    if (invited.length === 0) return;
+    let listHTML = invited.map(s => `
+      <div style="padding:12px 0;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-weight:bold;font-size:15px;">${s.store_name}</p>
+        <p style="margin:4px 0 0;font-size:13px;">대표자: ${s.owner_name} @${s.verychat_id}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#555;">주소: ${s.address}</p>
+      </div>
+    `).join('');
+    document.getElementById('invitedModal').innerHTML = `
+      <h3 style="margin:0 0 20px;color:#3366ff;font-size:20px;">${inviterName}님이 초대한 매장 (${invited.length}곳)</h3>
+      ${listHTML}
+      <div style="text-align:center;margin-top:20px;">
+        <button onclick="document.getElementById('modalOverlay').style.display='none';document.getElementById('invitedModal').style.display='none';" 
+                style="padding:10px 30px;background:#3366ff;color:white;border:none;border-radius:8px;cursor:pointer;">
+          닫기
+        </button>
+      </div>
+    `;
+    document.getElementById('modalOverlay').style.display = 'block';
+    document.getElementById('invitedModal').style.display = 'block';
+  };
+
+  // 지도 중심 맞추기
   const bounds = new maptilersdk.LngLatBounds();
   stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
-  map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });    };
+  map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
 </script>
 </body>
 </html>
