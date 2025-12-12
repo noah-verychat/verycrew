@@ -2,28 +2,28 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>VeryCrew 최종 완성본</title>
+<title>VeryCrew</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css">
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body,html{height:100%;font-family:sans-serif;overflow:hidden}
-  header{position:fixed;top:0;left:0;right:0;height:68px;background:#fff;box-shadow:0 3px 15px rgba(0,0,0,.12);z-index:9999;display:flex;align-items:center;justify-content:center;gap:60px}
+  body,html{height:100%;font-family:'Malgun Gothic',sans-serif;overflow:hidden}
+  header{position:fixed;top:0;left:0;right:0;height:68px;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:9999;display:flex;align-items:center;justify-content:center;gap:60px}
   header img{height:48px;border-radius:12px}
-  .tab{border:none;background:none;font-size:18px;font-weight:600;color:#666;padding:10px 20px;cursor:pointer}
-  .tab.active{color:#ff3366;font-weight:700;border-bottom:4px solid #ff3366}
+  .tab{border:none;background:none;font-size:18px;font-weight:600;color:#666;padding:12px 24px;cursor:pointer}
+  .tab.active{color:#ff3366;font-weight:800;border-bottom:4px solid #ff3366}
   #map{width:100%;height:calc(100vh-68px);margin-top:68px}
-  #panel{display:none;position:absolute;top:68px;left:0;right:0;bottom:0;background:#fff;padding:20px;overflow:auto}
-  table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px}
+  #lineup{display:none;position:absolute;top:68px;left:0;right:0;bottom:0;background:#fff;padding:20px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px}
   th,td{border:1px solid #ddd;padding:12px;text-align:center}
-  th{background:#ff3366;color:#fff;position:sticky;top:0;z-index:10}
-  #save{position:fixed;top:80px;right:20px;padding:12px 28px;background:#ff3366;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;display:none;z-index:1000}
-  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:2000}
-  .mc{background:#fff;padding:25px;width:92%;max-width:720px;border-radius:16px;max-height:90vh;overflow:auto}
-  .close{float:right;font-size:30px;color:#ff3366;cursor:pointer}
-  .btn{background:#ff69b4;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-top:10px}
-  .logo{width:100px;height:100px;object-fit:cover;border-radius:12px;border:3px solid #ff3366;margin-bottom:12px}
+  th{background:#ff3366;color:#fff;position:sticky;top:0}
+  #save{position:fixed;top:80px;right:20px;padding:12px 30px;background:#ff3366;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;display:none;z-index:1000}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:2000}
+  .m{content;background:#fff;padding:30px;width:92%;max-width:750px;border-radius:16px;max-height:90vh;overflow:auto}
+  .close{float:right;font-size:32px;color:#ff3366;cursor:pointer;font-weight:bold}
+  .btn{background:#ff69b4;color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;margin-top:10px}
+  .logo{width:100px;height:100px;object-fit:cover;border-radius:14px;border:4px solid #ff3366;margin:0 auto 12px;display:block}
 </style>
 </head>
 <body>
@@ -36,8 +36,8 @@
 
 <div id="map"></div>
 
-<div id="panel">
-  <h2 style="text-align:center;color:#ff3366;margin:20px 0">VeryCrew 명단 (수정 후 저장 클릭)</h2>
+<div id="lineup">
+  <h2 style="text-align:center;color:#ff3366;margin:0 0 25px">VeryCrew 명단 – 자유 편집 후 저장하세요</h2>
   <table><thead><tr>
     <th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th>
   </tr></thead><tbody id="tbody"></tbody></table>
@@ -46,21 +46,20 @@
 <button id="save">저장하기 (엑셀)</button>
 
 <div class="modal" id="modal">
-  <div class="mc">
-    <span class="close" onclick="modal.style.display='none'">x</span>
-    <h3 id="title" style="color:#ff3366;text-align:center;margin:15px 0"></h3>
+  <div class="m">
+    <span class="close" onclick="modal.style.display='none'">×</span>
+    <h3 id="title" style="color:#ff3366;text-align:center;margin:20px 0"></h3>
     <div id="list"></div>
   </div>
 </div>
 
 <script>
-// 키 + 지도 초기화 (절대 하얀 화면 안 뜸)
 maptilersdk.config.apiKey = 'wlAGSeTuUCbvwxWtQtEi';
 
 const map = new maptilersdk.Map({
   container: 'map',
   style: maptilersdk.MapStyle.STREETS,
-  center: [128.0, 36.0],
+  center: [128,36],
   zoom: 7
 });
 
@@ -174,22 +173,21 @@ const stores = [
   {"uid":106,"country":"korea","store_name":"서라벌마트","owner_name":"서라벌","phone":"821020367399.0","address":"대전광역시 서구 월평로34번길 13 1층","latitude":36.35556453,"longitude":127.3611442,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"honeybee7","invited":null,"L":null},
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
-// 마커 생성 (로고 정상 표시)
+// 마커 + 로고 + 초대현황
 stores.forEach(s=>{
   if(!s.lat) return;
-  const phone = s.p ? '010-'+s.p.slice(3,7)+'-'+s.p.slice(7) : '';
   const invited = stores.filter(x=>x.inv===s.id).length;
   const btn = invited ? `<br><button class="btn" onclick="show('${s.id}','${s.n}')">초대현황 ${invited}명</button>` : '';
-  const logo = s.logo ? `<img src="${s.logo}" class="logo" onerror="this.style.display='none'">` : '';
+  const logo = `<img src="${s.logo}" class="logo" onerror="this.style.display='none'">`;
 
   new maptilersdk.Marker({color:'#ff3366'})
-    .setLngLat([s.lng, s.lat])
-    .setPopup(new maptilersdk.Popup({offset:35, closeButton:true}).setHTML(`
-      <div style="text-align:center;padding:15px;min-width:250px">
+    .setLngLat([s.lng,s.lat])
+    .setPopup(new maptilersdk.Popup({offset:38,closeButton:true}).setHTML(`
+      <div style="text-align:center;padding:15px">
         ${logo}
-        <h3 style="color:#ff3366;margin:12px 0">${s.n}</h3>
+        <h3 style="color:#ff3366;margin:18px">${s.n}</h3>
         <p><b>대표:</b> ${s.o} (@${s.id})</p>
-        <p><b>연락처:</b> ${phone}</p>
+        <p><b>연락처:</b> ${s.p}</p>
         <p style="font-size:13px;color:#555">${s.a}</p>
         ${btn}
       </div>
@@ -197,52 +195,46 @@ stores.forEach(s=>{
     .addTo(map);
 });
 
-// 전국 자동 줌
-map.fitBounds(stores.reduce((b,s)=>b.extend([s.lng,s.lat]), new maptilersdk.LngLatBounds()), {padding:80, maxZoom:16});
+map.fitBounds(stores.reduce((b,s)=>b.extend([s.lng,s.lat]), new maptilersdk.LngLatBounds()), {padding:80,maxZoom:16});
 
-// 초대현황 모달
-window.show = function(id, name) {
-  const list = stores.filter(s => s.inv === id);
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px">
+// 모달
+window.show=function(id,name){
+  const list=stores.filter(s=>s.inv===id);
+  let h=`<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px">
     <tr style="background:#ff3366;color:#fff"><th>번호</th><th>상호명</th><th>대표자</th><th>@ID</th><th>연락처</th></tr>`;
-  list.forEach((s,i)=>{
-    const p = s.p ? '010-'+s.p.slice(3,7)+'-'+s.p.slice(7) : '';
-    html += `<tr style="text-align:center"><td>${i+1}</td><td>${s.n}</td><td>${s.o}</td><td style="color:#ff3366">@${s.id}</td><td>${p}</td></tr>`;
-  });
-  html += `</table>`;
-  document.getElementById('title').innerText = `${name} 님이 초대한 멤버 (${list.length}명)`;
-  document.getElementById('list').innerHTML = html;
-  document.getElementById('modal').style.display = 'flex';
+  list.forEach((s,i)=>h+=`<tr style="text-align:center"><td>${i+1}</td><td>${s.n}</td><td>${s.o}</td><td style="color:#ff3366">@${s.id}</td><td>${s.p}</td></tr>`);
+  document.getElementById('title').innerText=`${name} 님이 초대한 멤버 (${list.length}명)`;
+  document.getElementById('list').innerHTML=h+'</table>';
+  document.getElementById('modal').style.display='flex';
 };
 
-// 탭 + Lineup
-document.getElementById('mapTab').onclick = () => {
-  document.getElementById('map').style.display = 'block';
-  document.getElementById('panel').style.display = 'none';
-  document.getElementById('save').style.display = 'none';
+// 탭
+document.getElementById('mapTab').onclick=()=>{
+  document.getElementById('map').style.display='block';
+  document.getElementById('lineup').style.display='none';
+  document.getElementById('save').style.display='none';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('mapTab').classList.add('active');
 };
 
-document.getElementById('lineupTab').onclick = () => {
-  document.getElementById('map').style.display = 'none';
-  document.getElementById('panel').style.display = 'block';
-  document.getElementById('save').style.display = 'block';
+document.getElementById('lineupTab').onclick=()=>{
+  document.getElementById('map').style.display='none';
+  document.getElementById('lineup').style.display='block';
+  document.getElementById('save').style.display='block';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('lineupTab').classList.add('active');
-  loadTable();
+  load();
 };
 
-function loadTable() {
-  const t = document.getElementById('tbody');
-  t.innerHTML = '';
+function load(){
+  const t=document.getElementById('tbody');
+  t.innerHTML='';
   stores.forEach((s,i)=>{
-    const phone = s.p ? '010-'+s.p.slice(3,7)+'-'+s.p.slice(7) : '';
-    t.innerHTML += `<tr>
+    t.innerHTML+=`<tr>
       <td contenteditable>${i+1}</td>
       <td contenteditable>${s.n}</td>
       <td contenteditable>${s.o}</td>
-      <td contenteditable>${phone}</td>
+      <td contenteditable>${s.p}</td>
       <td contenteditable>${s.a}</td>
       <td contenteditable>가입</td>
       <td contenteditable></td>
@@ -250,15 +242,13 @@ function loadTable() {
   });
 }
 
-document.getElementById('save').onclick = () => {
-  let csv = ['번호\t상호명\t대표자\t연락처\t주소\t상태\t비고'];
-  document.querySelectorAll('#tbody tr').forEach(r=>{
-    csv.push(Array.from(r.cells).map(c=>c.innerText.trim()).join('\t'));
-  });
-  const blob = new Blob(['\uFEFF'+csv.join('\n')],{type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'VeryCrew_'+new Date().toISOString().slice(0,10)+'.xls';
+document.getElementById('save').onclick=()=>{
+  let d=['번호\t상호명\t대표자\t연락처\t주소\t상태\t비고'];
+  document.querySelectorAll('#tbody tr').forEach(r=>d.push(Array.from(r.cells).map(c=>c.innerText.trim()).join('\t')));
+  const b=new Blob(['\uFEFF'+d.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='VeryCrew_'+new Date().toISOString().slice(0,10)+'.xls';
   a.click();
   alert('저장 완료!');
 };
