@@ -1,72 +1,60 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>VeryCrew for VeryHunt</title>
+<meta charset="utf-8">
+<title>VeryCrew Map</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet" />
+<link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet">
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
 <style>
-  body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Malgun Gothic',sans-serif;}
-  header{position:fixed;top:0;left:0;right:0;height:68px;background:white;box-shadow:0 3px 15px rgba(0,0,0,.15);z-index:9999;display:flex;align-items:center;justify-content:center;gap:60px;}
-  .tab-btn{background:none;border:none;font-size:18px;font-weight:600;color:#666;cursor:pointer;padding:10px 20px;}
-  .tab-btn.active{color:#ff3366!important;font-weight:700!important;border-bottom:4px solid #ff3366!important;}
-  #map{width:100%;height:calc(100vh-68px);margin-top:68px;}
-  #lineupPanel{display:none;position:absolute;top:68px;left:0;right:0;bottom:0;background:white;overflow:auto;padding:20px;box-sizing:border-box;z-index:100;}
-  #lineupTable{width:100%;border-collapse:collapse;font-size:15px;}
-  #lineupTable th,#lineupTable td{border:1px solid #ddd;padding:10px;text-align:center;}
-  #lineupTable th{background:#ff3366;color:white;position:sticky;top:0;z-index:10;}
-  #saveBtn{position:fixed;top:80px;right:20px;z-index:1000;padding:12px 28px;background:#ff3366;color:white;border:none;border-radius:12px;font-size:16px;cursor:pointer;display:none;}
-  #saveBtn:hover{background:#e62e5a;}
-  .modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.7);align-items:center;justify-content:center;}
-  .modal-content{background:white;padding:25px;width:90%;max-width:700px;border-radius:16px;max-height:90vh;overflow:auto;}
-  .close-btn{float:right;font-size:28px;color:#ff3366;cursor:pointer;font-weight:bold;}
-  .invite-btn{background:#ff69b4;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;margin-top:8px;}
-  .logo-img{width:90px;height:90px;object-fit:cover;border-radius:12px;border:3px solid #ff3366;margin-bottom:10px;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body,html{height:100%;font-family:'Malgun Gothic',sans-serif;overflow:hidden}
+  header{position:fixed;top:0;left:0;right:0;height:68px;background:#fff;box-shadow:0 3px 15px rgba(0,0,0,.1);z-index:9999;display:flex;align-items:center;justify-content:center;gap:60px}
+  header img{height:48px;border-radius:12px}
+  .tab{background:none;border:none;font-size:18px;font-weight:600;color:#666;padding:10px 20px;cursor:pointer}
+  .tab.active{color:#ff3366;font-weight:700;border-bottom:4px solid #ff3366}
+  #map{width:100%;height:calc(100vh - 68px);margin-top:68px}
+  #panel{display:none;position:absolute;top:68px;left:0;right:0;bottom:0;background:#fff;padding:20px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px}
+  th,td{border:1px solid #ddd;padding:12px;text-align:center}
+  th{background:#ff3366;color:#fff;position:sticky;top:0;z-index:10}
+  #save{position:fixed;top:80px;right:20px;padding:12px 28px;background:#ff3366;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;display:none;z-index:1000}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:2000}
+  .modal-content{background:#fff;padding:25px;width:90%;max-width:700px;border-radius:16px;max-height:90vh;overflow:auto}
+  .close{float:right;font-size:28px;color:#ff3366;cursor:pointer;font-weight:bold}
+  .btn{background:#ff69b4;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;margin-top:8px}
+  .logo{width:90px;height:90px;object-fit:cover;border-radius:12px;border:3px solid #ff3366;margin-bottom:10px}
 </style>
 </head>
 <body>
 
 <header>
-  <img src="https://i.imgur.com/4G2AsbN.png" style="height:48px;border-radius:12px;">
+  <img src="https://i.imgur.com/4G2AsbN.png">
   <nav>
-    <button id="tabMap" class="tab-btn active">Map</button>
-    <button id="tabLineup" class="tab-btn">Lineup</button>
+    <button class="tab active" id="mapTab">Map</button>
+    <button class="tab" id="lineupTab">Lineup</button>
   </nav>
 </header>
 
 <div id="map"></div>
-
-<div id="lineupPanel">
-  <h2 style="text-align:center;color:#ff3366;margin-bottom:20px;">VeryCrew Lineup – 자유 편집 & 저장</h2>
-  <table id="lineupTable">
-    <thead><tr><th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th></tr></thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+<div id="panel">
+  <h2 style="text-align:center;color:#ff3366;margin-bottom:20px">VeryCrew Lineup – 편집 후 저장 클릭</h2>
+  <table><thead><tr>
+    <th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th>
+  </tr></thead><tbody id="tbody"></tbody></table>
 </div>
+<button id="save">저장하기 (엑셀)</button>
 
-<button id="saveBtn">저장하기 (엑셀)</button>
-
-<div id="modalOverlay" class="modal">
+<div class="modal" id="modal">
   <div class="modal-content">
-    <span class="close-btn" onclick="document.getElementById('modalOverlay').style.display='none'">×</span>
-    <h3 id="modalTitle" style="color:#ff3366;text-align:center;"></h3>
-    <div id="invitedList" style="margin-top:15px;"></div>
+    <span class="close" onclick="modal.style.display='none'">×</span>
+    <h3 id="title" style="color:#ff3366;text-align:center"></h3>
+    <div id="list" style="margin-top:15px"></div>
   </div>
 </div>
 
 <script>
-// ← 이 부분이 핵심! 스크립트 로드 끝난 후에만 실행
-window.onload = function() {
-
 maptilersdk.config.apiKey = 'wlAGSeTuUCbvwxWtQtEi';
-
-const map = new maptilersdk.Map({
-  container: 'map',
-  style: maptilersdk.MapStyle.STREETS,
-  center: [128.0, 36.0],
-  zoom: 7
-});
 // ★★★ 여기부터 107개 실제 데이터 ★★★
 const stores = [
   {"uid":1,"country":"korea","store_name":"주.에스아이셀센터","owner_name":"윤차식","phone":"821038879451.0","address":"경남 진주시 동부로169번길 12 B동 502호","latitude":35.16488185,"longitude":128.1272793,"logo_url":"https://imgur.com/s6SNXa3","verychat_id":"Yoon8301cs","invited":null,"L":null},
@@ -177,31 +165,31 @@ const stores = [
   {"uid":106,"country":"korea","store_name":"서라벌마트","owner_name":"서라벌","phone":"821020367399.0","address":"대전광역시 서구 월평로34번길 13 1층","latitude":36.35556453,"longitude":127.3611442,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"honeybee7","invited":null,"L":null},
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
-stores.forEach(store => {
-  if (store.logo_url && store.logo_url.includes('imgur.com/')) {
-    // https://imgur.com/xxxxxx → https://i.imgur.com/xxxxxx.png 로 바꾸기
-    const id = store.logo_url.split('/').pop();
-    store.logo_url = `https://i.imgur.com/${id}.png`;
-  }
+const map = new maptilersdk.Map({
+  container: 'map',
+  style: maptilersdk.MapStyle.STREETS,
+  center: [128, 36],
+  zoom: 7
 });
+
 // 마커 생성
 stores.forEach(s => {
-  if (!s.latitude) return;
-  const phone = s.phone ? '010-' + s.phone.replace('8210','').replace('.0','').replace(/(\d{3,4})(\d{4})/,'$1-$2') : '';
-  const invited = stores.filter(x => x.invited === s.verychat_id);
-  const btn = invited.length > 0 ? `<br><button class="invite-btn" onclick="showInvited('${s.verychat_id}','${s.store_name}')">초대현황 (${invited.length}명)</button>` : '';
-  const logo = s.logo_url ? `<img src="${s.logo_url}" class="logo-img" onerror="this.style.display='none'">` : '';
+  if (!s.lat) return;
+  const phone = s.p ? '010-' + s.p.slice(3,-2).replace(/(\d{4})$/, '-$1') : '';
+  const invited = stores.filter(x => x.inv === s.id);
+  const btn = invited.length ? `<br><button class="btn" onclick="show('${s.id}','${s.n}')">초대현황 (${invited.length}명)</button>` : '';
+  const logo = s.logo ? `<img src="${s.logo}" class="logo" onerror="this.style.display='display:none'">` : '';
 
   new maptilersdk.Marker({color:'#ff3366'})
-    .setLngLat([s.longitude, s.latitude])
+    .setLngLat([s.lng, s.lat])
     .setPopup(new maptilersdk.Popup({offset:35, closeButton:true}).setHTML(`
-      <div style="text-align:center;padding:12px;min-width:240px;">
+      <div style="text-align:center;padding:12px;min-width:240px">
         ${logo}
-        <h3 style="color:#ff3366;margin:10px 0 6px;">${s.store_name}</h3>
-        <p><b>대표자:</b> ${s.owner_name}</p>
-        <p style="color:#ff3366;"><b>@${s.verychat_id}</b></p>
+        <h3 style="color:#ff3366;margin:10px 0">${s.n}</h3>
+        <p><b>대표:</b> ${s.o}</p>
+        <p style="color:#ff3366"><b>@${s.id}</b></p>
         <p><b>연락처:</b> ${phone}</p>
-        <p style="font-size:13px;color:#555;">${s.address}</p>
+        <p style="font-size:13px;color:#555">${s.a}</p>
         ${btn}
       </div>
     `))
@@ -209,79 +197,73 @@ stores.forEach(s => {
 });
 
 // 전국 자동 줌
-const bounds = new maptilersdk.LngLatBounds();
-stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
-map.fitBounds(bounds, {padding:80, maxZoom:16});
+map.fitBounds(stores.reduce((b,s)=>b.extend([s.lng,s.lat]), new maptilersdk.LngLatBounds()), {padding:80, maxZoom:16});
 
-// 모달
-window.showInvited = function(id, name) {
-  const list = stores.filter(s => s.invited === id);
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:14px;">
-    <tr style="background:#ff3366;color:white;"><th>번호</th><th>상호명</th><th>대표자</th><th>@ID</th><th>연락처</th><th>주소</th></tr>`;
+// 초대현황 모달
+window.show = function(id, name) {
+  const list = stores.filter(s => s.inv === id);
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:14px">
+    <tr style="background:#ff3366;color:#fff"><th>번호</th><th>상호명</th><th>대표자</th><th>@ID</th><th>연락처</th><th>주소</th></tr>`;
   list.forEach((s,i) => {
-    const p = s.phone ? '010-' + s.phone.replace('8210','').replace('.0','').replace(/(\d{3,4})(\d{4})/,'$1-$2') : '';
-    html += `<tr style="text-align:center;"><td>${i+1}</td><td>${s.store_name}</td><td>${s.owner_name}</td><td style="color:#ff3366;">@${s.verychat_id}</td><td>${p}</td><td style="font-size:12px;">${s.address}</td></tr>`;
+    const p = s.p ? '010-' + s.p.slice(3,-2).replace(/(\d{4})$/, '-$1') : '';
+    html += `<tr style="text-align:center"><td>${i+1}</td><td>${s.n}</td><td>${s.o}</td><td style="color:#ff3366">@${s.id}</td><td>${p}</td><td style="font-size:12px">${s.a}</td></tr>`;
   });
   html += `</table>`;
-  document.getElementById('modalTitle').innerText = `${name} 님이 초대한 멤버 (${list.length}명)`;
-  document.getElementById('invitedList').innerHTML = html;
-  document.getElementById('modalOverlay').style.display = 'flex';
+  document.getElementById('title').innerText = `${name} 님이 초대한 멤버 (${list.length}명)`;
+  document.getElementById('list').innerHTML = html;
+  document.getElementById('modal').style.display = 'flex';
 };
 
-// 탭 + Lineup + 저장
-document.getElementById('tabMap').onclick = () => {
+// 탭 전환
+document.getElementById('mapTab').onclick = () => {
   document.getElementById('map').style.display = 'block';
-  document.getElementById('lineupPanel').style.display = 'none';
-  document.getElementById('saveBtn').style.display = 'none';
-  document.getElementById('modalOverlay').style.display = 'none';
-  document.getElementById('tabMap').classList.add('active');
-  document.getElementById('tabLineup').classList.remove('active');
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('save').style.display = 'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('mapTab').classList.add('active');
 };
 
-document.getElementById('tabLineup').onclick = () => {
+document.getElementById('lineupTab').onclick = () => {
   document.getElementById('map').style.display = 'none';
-  document.getElementById('lineupPanel').style.display = 'block';
-  document.getElementById('saveBtn').style.display = 'block';
-  document.getElementById('modalOverlay').style.display = 'none';
-  document.getElementById('tabMap').classList.remove('active');
-  document.getElementById('tabLineup').classList.add('active');
-  loadTable();
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('save').style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('lineupTab').classList.add('active');
+  load();
 };
 
-function loadTable() {
-  const tbody = document.getElementById('tableBody');
+// Lineup 로드
+function load() {
+  const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
   stores.forEach((s,i) => {
-    const phone = s.phone ? '010-' + s.phone.replace('8210','').replace('.0','').replace(/(\d{3,4})(\d{4})/,'$1-$2') : '';
+    const phone = s.p ? '010-' + s.p.slice(3,-2).replace(/(\d{4})$/, '-$1') : '';
     tbody.innerHTML += `<tr>
       <td contenteditable>${i+1}</td>
-      <td contenteditable>${s.store_name}</td>
-      <td contenteditable>${s.owner_name}</td>
+      <td contenteditable>${s.n}</td>
+      <td contenteditable>${s.o}</td>
       <td contenteditable>${phone}</td>
-      <td contenteditable>${s.address}</td>
+      <td contenteditable>${s.a}</td>
       <td contenteditable>가입</td>
       <td contenteditable></td>
     </tr>`;
   });
 }
 
-document.getElementById('saveBtn').onclick = () => {
-  let csv = ['번호\t상호명\t대표자\t연락처\t주소\t상태\t비고'];
-  document.querySelectorAll('#lineupTable tbody tr').forEach(tr => {
-    let row = [];
-    tr.querySelectorAll('td').forEach(td => row.push(td.innerText.trim()));
-    csv.push(row.join('\t'));
+// 엑셀 저장
+document.getElementById('save').onclick = () => {
+  let data = ['번호\t상호명\t대표자\t연락처\t주소\t상태\t비고'];
+  document.querySelectorAll('#tbody tr').forEach(tr => {
+    const row = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
+    data.push(row);
   });
-  const blob = new Blob(['\uFEFF'+csv.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob(['\uFEFF'+data.join('\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = 'VeryCrew_'+new Date().toISOString().slice(0,10)+'.xls';
   a.click();
   alert('저장 완료!');
 };
-
-}; // ← window.onload 끝
 </script>
 </body>
 </html>
