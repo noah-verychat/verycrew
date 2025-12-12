@@ -1,4 +1,4 @@
-    const stores = [ /* 너의 107개 데이터 그대로 복붙 */
+    const stores = [
   {"uid":1,"country":"korea","store_name":"주.에스아이셀센터","owner_name":"윤차식","phone":"821038879451.0","address":"경남 진주시 동부로169번길 12 B동 502호","latitude":35.16488185,"longitude":128.1272793,"logo_url":"https://imgur.com/s6SNXa3","verychat_id":"Yoon8301cs","invited":null,"L":null},
   {"uid":2,"country":"korea","store_name":"(주)여행조아","owner_name":"유정은","phone":"821063002523.0","address":"경남 진주시 남강로 597-1","latitude":35.19047609,"longitude":128.0770643,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"jeong78","invited":"Yoon8301cs","L":null},
   {"uid":3,"country":"korea","store_name":"안여정남성컷트전문점","owner_name":"안여정","phone":"821036564255.0","address":"경남 진주시 호탄길 22번길 4 (수경빌딩 1층)","latitude":35.1632,"longitude":128.116617,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"d6672569A","invited":"Yoon8301cs","L":null},
