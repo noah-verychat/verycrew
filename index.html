@@ -9,55 +9,76 @@
   <style>
     body, html { margin:0; padding:0; height:100%; overflow:hidden; }
     #container { position:fixed; top:68px; left:0; right:0; bottom:0; display:flex; flex-direction:column; }
-    #lineupSheet { width:100%; height:0; border:none; transition:height 0.4s ease; overflow:hidden; }
+    #lineupArea { 
+      width:100%; 
+      height:0; 
+      overflow:hidden; 
+      transition:height 0.4s ease; 
+      position:relative;
+    }
+    #lineupSheet { width:100%; height:100%; border:none; }
     #dragHandle {
-      height:8px; background:#ddd; cursor:ns-resize; z-index:10;
+      height:10px; background:#ddd; cursor:ns-resize; z-index:10;
       display:flex; align-items:center; justify-content:center;
     }
     #dragHandle::before { content:"⋯ ⋯ ⋯"; color:#999; font-size:20px; }
     #dragHandle:hover { background:#ff3366; }
     #dragHandle:hover::before { color:white; }
     #map { width:100%; flex:1; }
+    .active-tab {
+      background:none; border:none; font-size:18px; font-weight:600; color:#666;
+      cursor:pointer; padding:10px 20px; transition:0.3s; position:relative;
+    }
+    .active-tab.active {
+      color:#ff3366 !important;
+      font-weight:700 !important;
+      border-bottom:4px solid #ff3366 !important;
+      border-radius:4px;
+    }
+    .active-tab:hover { color:#333; }
   </style>
 </head>
 <body>
 
 <!-- 상단바 -->
-<header style="position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,0.98);backdrop-filter:blur(15px);box-shadow:0 4px 20px rgba(0,0,0,0.08);z-index:9999;display:flex;align-items:center;justify-content:center;padding:0 30px;">
+<header style="position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,0.98);backdrop-filter:blur(15px);box-shadow:0 4px 20px rgba(0,0,0,0.08);z-index:9999;display:flex;align-items:center;justify-content:center;padding:0 40px;">
   <div style="display:flex;align-items:center;gap:60px;">
     <img src="https://i.imgur.com/4G2AsbN.png" alt="Logo" style="height:48px;border-radius:10px;">
     <nav style="display:flex;gap:40px;">
-      <button id="tabMap" style="background:none;border:none;font-size:18px;font-weight:700;color:#ff3366;padding:10px 20px;border-bottom:4px solid #ff3366;border-radius:4px;cursor:pointer;">Map</button>
-      <button id="tabLineup" style="background:none;border:none;font-size:18px;font-weight:600;color:#666;padding:10px 20px;cursor:pointer;" 
-              onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">Lineup</button>
-      <button style="background:none;border:none;font-size:18px;font-weight:600;color:#666;padding:10px 20px;cursor:pointer;"
-              onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">Pending/Review</button>
+      <button id="tabMap"     class="active-tab active">Map</button>
+      <button id="tabLineup"  class="active-tab">Lineup</button>
+      <button id="tabPending" class="active-tab">Pending/Review</button>
     </nav>
   </div>
 </header>
 
-<!-- 컨테이너 (시트 + 손잡이 + 지도) -->
+<!-- 컨테이너 -->
 <div id="container">
-  <iframe id="lineupSheet"
-          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9i9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6/pubhtml?gid=0&single=true&widget=true&headers=false">
-  </iframe>
-  <div id="dragHandle"></div>
+  <!-- Lineup 영역 (초기엔 안 보임) -->
+  <div id="lineupArea">
+    <iframe id="lineupSheet"
+            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9i9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6n9o6/pubhtml?gid=0&single=true&widget=true&headers=false">
+    </iframe>
+    <div id="dragHandle"></div>
+  </div>
+  <!-- 지도 -->
   <div id="map"></div>
 </div>
 
-<!-- 모달창 -->
+<!-- 모달 -->
 <div id="modalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;"></div>
 <div id="invitedModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.92);padding:24px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);max-width:90%;max-height:85%;overflow-y:auto;z-index:10000;font-family:sans-serif;backdrop-filter:blur(8px);"></div>
 
 <script>
   maptilersdk.config.apiKey = 'wlAGSeTuUCbvwxWtQtEi';
   const map = new maptilersdk.Map({
-    container: 'map',
+    container: 'map,
     style: maptilersdk.MapStyle.STREETS,
     center: [127.8, 36.0],
     zoom: 7
   });
 
+  const sheetArea = document.getElementById('lineupArea');
   const sheet = document.getElementById('lineupSheet');
   const handle = document.getElementById('dragHandle');
   let isDragging = false;
@@ -69,13 +90,24 @@
     const rect = document.getElementById('container').getBoundingClientRect();
     const y = e.clientY - rect.top;
     const percent = (y / rect.height) * 100;
-    if (percent > 10 && percent < 90) sheet.style.height = percent + '%';
+    if (percent > 10 && percent < 90) {
+      sheetArea.style.height = percent + '%';
+    }
   });
   document.addEventListener('mouseup', () => isDragging = false);
 
   // 탭 전환
-  document.getElementById('tabMap').onclick = () => sheet.style.height = '0%';
-  document.getElementById('tabLineup').onclick = () => sheet.style.height = '50%';
+  document.getElementById('tabMap').onclick = () => {
+    sheetArea.style.height = '0';
+    document.getElementById('tabMap').classList.add('active');
+    document.getElementById('tabLineup').classList.remove('active');
+  };
+
+  document.getElementById('tabLineup').onclick = () => {
+    sheetArea.style.height = '50%';
+    document.getElementById('tabMap').classList.remove('active');
+    document.getElementById('tabLineup').classList.add('active');
+  };
     const stores = [
   {"uid":1,"country":"korea","store_name":"주.에스아이셀센터","owner_name":"윤차식","phone":"821038879451.0","address":"경남 진주시 동부로169번길 12 B동 502호","latitude":35.16488185,"longitude":128.1272793,"logo_url":"https://imgur.com/s6SNXa3","verychat_id":"Yoon8301cs","invited":null,"L":null},
   {"uid":2,"country":"korea","store_name":"(주)여행조아","owner_name":"유정은","phone":"821063002523.0","address":"경남 진주시 남강로 597-1","latitude":35.19047609,"longitude":128.0770643,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"jeong78","invited":"Yoon8301cs","L":null},
@@ -711,6 +743,6 @@ function clearLines() {
 const bounds = new maptilersdk.LngLatBounds();
   stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
   map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
-  </script>
+</script>
 </body>
 </html>
