@@ -4,55 +4,30 @@
   <meta charset="utf-8">
   <title>verycrew for veryhunt</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet" />
-  <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
+  <!-- 최신 살아있는 MapTiler SDK 사용 (2025년 기준) -->
+  <link href="https://cdn.maptiler.com/maplibre-gl-js/v4.7.0/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://cdn.maptiler.com/maplibre-gl-js/v4.7.0/maplibre-gl.js"></script>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family: 'Malgun Gothic, sans-serif; }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family: 'Malgun Gothic', sans-serif; }
     #container { position:fixed; top:68px; left:0; right:0; bottom:0; display:flex; flex-direction:column; }
     #lineupArea { width:100%; height:0; overflow:hidden; transition:height 0.5s ease; background:#f8f9fa; }
-    #lineupTable { width:100%; height:100%; border-collapse:collapse; font-size:14px; }
-    #lineupTable th, #lineupTable td { 
-      border:1px solid #ddd; padding:10px; text-align:center; 
-      min-width:80px; height:40px; 
-    }
+    #lineupTable { width:100%; border-collapse:collapse; font-size:14px; }
+    #lineupTable th, #lineupTable td { border:1px solid #ddd; padding:10px; text-align:center; min-width:80px; height:40px; }
     #lineupTable th { background:#ff3366; color:white; font-weight:bold; position:sticky; top:0; z-index:5; }
-    #lineupTable input { 
-      width:100%; height:100%; border:none; padding:0 8px; box-sizing:border-box; 
-      background:transparent; text-align:center; font-size:14px;
-    }
-    #dragHandle {
-      height:12px; background:#ddd; cursor:ns-resize; z-index:10;
-      display:flex; align-items:center; justify-content:center; font-weight:bold; color:#666;
-    }
+    #dragHandle { height:12px; background:#ddd; cursor:ns-resize; z-index:10; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#666; }
     #dragHandle::before { content:"VeryCrew Lineup 편집 모드"; font-size:14px; }
     #dragHandle:hover { background:#ff3366; }
     #dragHandle:hover::before { content:"줄을 아래로 당겨 편집하세요"; color:white; }
     #map { width:100%; flex:1; }
-    .tab-btn {
-      background:none; border:none; font-size:18px; font-weight:600; color:#666;
-      cursor:pointer; padding:10px 20px; transition:0.3s; position:relative;
-    }
-    .tab-btn.active {
-      color:#ff3366 !important; font-weight:700 !important;
-      border-bottom:4px solid #ff3366 !important; border-radius:4px;
-    }
-    .tab-btn:hover { color:#333; }
-    #saveBtn {
-      position:absolute; top:80px; right:20px; z-index:100;
-      padding:10px 20px; background:#ff3366; color:white; border:none;
-      border-radius:10px; font-size:16px; cursor:pointer; box-shadow:0 4px 15px rgba(255,51,102,0.3);
-    }
+    .tab-btn { background:none; border:none; font-size:18px; font-weight:600; color:#666; cursor:pointer; padding:10px 20px; transition:0.3s; position:relative; }
+    .tab-btn.active { color:#ff3366 !important; font-weight:700 !important; border-bottom:4px solid #ff3366 !important; border-radius:4px; }
+    #saveBtn { position:absolute; top:80px; right:20px; z-index:100; padding:10px 20px; background:#ff3366; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; }
     #saveBtn:hover { background:#e62e5a; }
-/* GitHub Pages 기본 푸터 완전 삭제 */
-footer, #footer, .footer, .gh-footer, .maplibregl-credits { 
-  display: none !important; 
-  visibility: hidden !important; 
-}
+    /* 푸터 완전 삭제 */
+    footer, .maplibregl-credits, .mapboxgl-credits { display:none !important; }
   </style>
 </head>
 <body>
-
-<!-- 상단바 -->
 <header style="position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,0.98);backdrop-filter:blur(15px);box-shadow:0 4px 20px rgba(0,0,0,0.08);z-index:9999;display:flex;align-items:center;justify-content:center;padding:0 40px;">
   <div style="display:flex;align-items:center;gap:60px;">
     <img src="https://i.imgur.com/4G2AsbN.png" alt="Logo" style="height:48px;border-radius:10px;">
@@ -64,108 +39,82 @@ footer, #footer, .footer, .gh-footer, .maplibregl-credits {
   </div>
 </header>
 
-<!-- 저장 버튼 (Lineup에서만 보임) -->
 <button id="saveBtn" style="display:none;">저장하기</button>
 
-<!-- 컨테이너 -->
 <div id="container">
-  <!-- Lineup 영역 -->
   <div id="lineupArea">
     <div style="padding:20px; height:100%; box-sizing:border-box; overflow:auto;">
       <table id="lineupTable">
         <thead>
-          <tr>
-            <th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th>
-          </tr>
+          <tr><th>번호</th><th>상호명</th><th>대표자</th><th>연락처</th><th>주소</th><th>상태</th><th>비고</th></tr>
         </thead>
         <tbody id="tableBody">
-          <!-- 여기부터 직접 붙여넣기 시작 -->
           <tr><td contenteditable>1</td><td contenteditable>주.에스아이셀센터</td><td contenteditable>윤차식</td><td contenteditable>010-3887-9451</td><td contenteditable>경남 진주시 동부로169번길 12</td><td contenteditable>가입</td><td contenteditable></td></tr>
-          <tr><td contenteditable>2</td><td contenteditable>(주)여행조아</td><td contenteditable>유정은</td><td contenteditable>010-6300-2523</td><td contenteditable>경남 진주시 남강로 597-1</td><td contenteditable>가입</td><td contenteditable></td></tr>
-          <!-- 여기까지 원하는 만큼 직접 복붙해서 채워넣기 -->
+          <tr><td contenteditable>2</td><td contenteditable>(주)여행조아</td><td contenteditable>유정은</td><td><td contenteditable>010-6300-2523</td><td contenteditable>경남 진주시 남강로 597-1</td><td contenteditable>가입</td><td contenteditable></td></tr>
+          <!-- 여기에 나머지 행 마음대로 추가 -->
         </tbody>
       </table>
-      <div style="text-align:center;margin:30px 0;color:#888;">
-        <p>원하는 만큼 행 추가 가능 • 더블클릭해서 수정 • 저장 버튼으로 다운로드</p>
-      </div>
     </div>
     <div id="dragHandle"></div>
   </div>
-  <!-- 지도 -->
   <div id="map"></div>
 </div>
 
-<!-- 모달 -->
-<div id="modalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;"></div>
-<div id="invitedModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.92);padding:24px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);max-width:90%;max-height:85%;overflow-y:auto;z-index:10000;font-family:sans-serif;backdrop-filter:blur(8px);"></div>
-
 <script>
-  // 지도 초기화
+// 너의 MapTiler 키 그대로 사용
 maplibregl.accessToken = 'wlAGSeTuUCbvwxWtQtEi';
+
 const map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://api.maptiler.com/maps/streets/style.json?key=wlAGSeTuUCbvwxWtQtEi',
-    center: [127.8, 36.0],
-    zoom: 7
+  container: 'map',
+  style: 'https://api.maptiler.com/maps/streets/style.json?key=wlAGSeTuUCbvwxWtQtEi',
+  center: [127.8, 36.0],
+  zoom: 7
+});
+
+const sheetArea = document.getElementById('lineupArea');
+const saveBtn = document.getElementById('saveBtn');
+let isDragging = false;
+
+document.getElementById('dragHandle').addEventListener('mousedown', e => { isDragging = true; e.preventDefault(); });
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const rect = document.getElementById('container').getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  const percent = (y / rect.height) * 100;
+  if (percent > 10 && percent < 90) sheetArea.style.height = percent + '%';
+});
+document.addEventListener('mouseup', () => isDragging = false);
+
+document.getElementById('tabMap').onclick = () => {
+  sheetArea.style.height = '0';
+  saveBtn.style.display = 'none';
+  document.getElementById('tabMap').classList.add('active');
+  document.getElementById('tabLineup').classList.remove('active');
+};
+
+document.getElementById('tabLineup').onclick = () => {
+  sheetArea.style.height = '70%';
+  saveBtn.style.display = 'block';
+  document.getElementById('tabMap').classList.remove('active');
+  document.getElementById('tabLineup').classList.add('active');
+};
+
+saveBtn.onclick = () => {
+  let csv = [];
+  document.querySelectorAll('#lineupTable tr').forEach(row => {
+    let rowData = [];
+    row.querySelectorAll('td, th').forEach(cell => rowData.push(cell.innerText.trim()));
+    csv.push(rowData.join('\t'));
   });
-
-  const sheetArea = document.getElementById('lineupArea');
-  const dragHandle = document.getElementById('dragHandle');
-  const saveBtn = document.getElementById('saveBtn');
-  let isDragging = false;
-
-  // 드래그
-  dragHandle.addEventListener('mousedown', e => { isDragging = true; e.preventDefault(); });
-  document.addEventListener('mousemove', e => {
-    if (!isDragging) return;
-    const rect = document.getElementById('container').getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const percent = (y / rect.height) * 100;
-    if (percent > 10 && percent < 90) sheetArea.style.height = percent + '%';
-  });
-  document.addEventListener('mouseup', () => isDragging = false);
-
-  // 탭 전환
-  document.getElementById('tabMap').onclick = () => {
-    sheetArea.style.height = '0';
-    saveBtn.style.display = 'none';
-    document.getElementById('tabMap').classList.add('active');
-    document.getElementById('tabLineup').classList.remove('active');
-  };
-
-  document.getElementById('tabLineup').onclick = () => {
-    sheetArea.style.height = '70%';
-    saveBtn.style.display = 'block';
-    document.getElementById('tabMap').classList.remove('active');
-    document.getElementById('tabLineup').classList.add('active');
-  };
-
-  // 저장 기능 (엑셀 형식으로 다운로드)
-  saveBtn.onclick = () => {
-    let csv = [];
-    const rows = document.querySelectorAll('#lineupTable tr');
-    rows.forEach(row => {
-      let rowData = [];
-      row.querySelectorAll('td, th').forEach(cell => {
-        rowData.push(cell.innerText.trim());
-      });
-      csv.push(rowData.join('\t')); // 탭으로 구분 → 엑셀에서 잘 열림
-    });
-    const csvContent = csv.join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'VeryCrew_Lineup_' + new Date().toISOString().slice(0,10) + '.xls');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    alert('저장 완료! 엑셀 파일이 다운로드됩니다');
-  };
-
-  // 너의 기존 마커 + 초대현황 코드 그대로 아래에 붙이면 됩니다!
-  // (기존에 잘 작동하던 stores.forEach(...) 부분 전부 그대로 복붙)    
+  const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'VeryCrew_Lineup_' + new Date().toISOString().slice(0,10) + '.xls';
+  a.click();
+  alert('저장 완료!');
+};
+  // 너의 stores 데이터 (107개 그대로)
 
 const stores = [
   {"uid":1,"country":"korea","store_name":"주.에스아이셀센터","owner_name":"윤차식","phone":"821038879451.0","address":"경남 진주시 동부로169번길 12 B동 502호","latitude":35.16488185,"longitude":128.1272793,"logo_url":"https://imgur.com/s6SNXa3","verychat_id":"Yoon8301cs","invited":null,"L":null},
@@ -277,139 +226,33 @@ const stores = [
   {"uid":107,"country":"korea","store_name":"소장군 황제갈비살","owner_name":"김동원","phone":"821031820595.0","address":"인천광역시 서구 건지로 405 1층","latitude":37.495549,"longitude":126.686437,"logo_url":"https://imgur.com/dA6Up2i","verychat_id":"tkddww","invited":null,"L":null}
 ];
 let markers = [];
-  let currentLines = [];
-  let hoveredId = null;
+let currentLines = [];
+let hoveredId = null;
 
-  stores.forEach(store => {
-    if (!store.latitude || !store.longitude) return;
-    const phone = store.phone
-      ? '010-' + store.phone.replace('8210', '').replace('.0', '').replace(/(\d{3,4})(\d{4})/, '$1-$2')
-      : '미기재';
-    const myInvited = stores.filter(s => s.invited === store.verychat_id);
-    const inviteButton = myInvited.length > 0 ? `
-      <button onclick="showInvitedList('${store.verychat_id}', '${store.store_name.replace(/'/g, "\\'")}')"
-              style="margin-top:12px;background:#ff69b4;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;">
-        초대현황 보기 (${myInvited.length}곳)
-      </button>
-    ` : '';
-    const popup = new maptilersdk.Popup({ offset: 20, closeButton: true })
-      .setHTML(`
-        <div style="background:white;padding:16px;border-radius:14px;box-shadow:0 6px 25px rgba(0,0,0,0.2);min-width:300px;">
-          <h3 style="margin:0 0 12px;color:#3366ff;font-size:19px;font-weight:bold;">${store.store_name}</h3>
-          <p style="margin:5px 0;font-size:14px;"><b>대표자:</b> ${store.owner_name || '미기재'} <span style="color:#ff69b4;">@${store.verychat_id}</span></p>
-          <p style="margin:5px 0;font-size:14px;"><b>연락처:</b> ${phone}</p>
-          <p style="margin:5px 0 15px;font-size:14px;color:#555;"><b>주소:</b> ${store.address}</p>
-          ${inviteButton}
-        </div>
-      `);
-    let iconUrl = store.logo_url?.includes('imgur.com')
-      ? store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg'
-      : 'data:image/svg+xml,' + encodeURIComponent(`
-        <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="15" cy="15" r="14" fill="#3366ff"/>
-          <text x="15" y="19" font-size="14" fill="white" text-anchor="middle" font-weight="bold">
-            ${store.store_name.substring(0,2)}
-          </text>
-        </svg>
-      `);
-    const marker = new maptilersdk.Marker({
-      element: (() => {
-        const div = document.createElement('div');
-        div.innerHTML = `<img src="${iconUrl}" style="width:30px;height:30px;border-radius:50%;box-shadow:0 3px 12px rgba(0,0,0,0.5);border:2px solid white;">`;
-        return div.firstChild;
-      })(),
-      anchor: 'center'
-    })
+stores.forEach(store => {
+  if (!store.latitude || !store.longitude) return;
+  const phone = store.phone ? '010-' + store.phone.replace('8210', '').replace('.0', '').replace(/(\d{3,4})(\d{4})/, '$1-$2') : '미기재';
+  const myInvited = stores.filter(s => s.invited === store.verychat_id);
+  const inviteButton = myInvited.length > 0 ? `<button onclick="showInvitedList('${store.verychat_id}', '${store.store_name.replace(/'/g, "\\'")}')" style="margin-top:12px;background:#ff69b4;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">초대현황 (${myInvited.length}곳)</button>` : '';
+  
+  const popup = new maplibregl.Popup({ offset: 25, closeButton: true })
+    .setHTML(`<div style="padding:12px 16px;"><h3 style="margin:0 0 8px;color:#3366ff;font-weight:bold;">${store.store_name}</h3><p><b>대표자:</b> ${store.owner_name} @${store.verychat_id}</p><p><b>연락처:</b> ${phone}</p><p><b>주소:</b> ${store.address}</p>${inviteButton}</div>`);
+
+  let iconUrl = store.logo_url?.includes('imgur.com') ? store.logo_url.replace('imgur.com', 'i.imgur.com') + '.jpg' : 'data:image/svg+xml,' + encodeURIComponent(`<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#3366ff"/><text x="17" y="22" font-size="16" fill="white" text-anchor="middle" font-weight="bold">${store.store_name.substring(0,2)}</text></svg>`);
+
+  const el = document.createElement('div');
+  el.innerHTML = `<img src="${iconUrl}" style="width:34px;height:34px;border-radius:50%;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.4);">`;
+
+  new maplibregl.Marker(el)
     .setLngLat([store.longitude, store.latitude])
     .setPopup(popup)
     .addTo(map);
-    const el = marker.getElement();
-    el.addEventListener('mouseenter', () => {
-      if (hoveredId === store.verychat_id) return;
-      clearLines();
-      el.style.transform = 'scale(1.4)';
-      el.style.zIndex = '1000';
-      const invitedByMe = stores.filter(s => s.invited === store.verychat_id);
-      invitedByMe.forEach(child => {
-        const childMarker = markers.find(m => m.store.verychat_id === child.verychat_id);
-        if (childMarker) {
-          childMarker.marker.getElement().style.transform = 'scale(1.35)';
-          childMarker.marker.getElement().style.zIndex = '999';
-          drawLine(store, child);
-        }
-      });
-      hoveredId = store.verychat_id;
-    });
-    el.addEventListener('mouseleave', () => {
-      if (hoveredId !== store.verychat_id) return;
-      clearLines();
-      markers.forEach(m => m.marker.getElement().style.transform = 'scale(1)');
-      hoveredId = null;
-    });
-    markers.push({ marker, store });
-  });
+});
 
-  function drawLine(from, to) {
-    const midLng = (from.longitude + to.longitude) / 2;
-    const midLat = (from.latitude + to.latitude) / 2;
-    const line = document.createElement('div');
-    line.style.position = 'absolute';
-    line.style.background = '#ffb6c1';
-    line.style.height = '3px';
-    line.style.opacity = '0.85';
-    line.style.pointerEvents = 'none';
-    line.style.boxShadow = '0 0 12px #ffb6c1';
-    line.style.transformOrigin = 'left center';
-    const dx = (to.longitude - from.longitude) * 111320;
-    const dy = (to.latitude - from.latitude) * 111320;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    line.style.width = distance + 'px';
-    line.style.transform = `rotate(${angle}deg)`;
-    const lineMarker = new maptilersdk.Marker({
-      element: line,
-      anchor: 'center',
-      offset: [-distance / 2, 0]
-    })
-    .setLngLat([from.longitude, from.latitude])
-    .addTo(map);
-    currentLines.push(lineMarker);
-  }
-
-  function clearLines() {
-    currentLines.forEach(l => l.remove());
-    currentLines = [];
-  }
-
-  // 초대현황 모달
-  window.showInvitedList = function(inviterId, inviterName) {
-    const invited = stores.filter(s => s.invited === inviterId);
-    if (invited.length === 0) return;
-    let listHTML = invited.map(s => `
-      <div style="padding:12px 0;border-bottom:1px solid #eee;">
-        <p style="margin:0;font-weight:bold;font-size:15px;">${s.store_name}</p>
-        <p style="margin:4px 0 0;font-size:13px;">대표자: ${s.owner_name} @${s.verychat_id}</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#555;">주소: ${s.address}</p>
-      </div>
-    `).join('');
-    document.getElementById('invitedModal').innerHTML = `
-      <h3 style="margin:0 0 20px;color:#3366ff;font-size:20px;">${inviterName}님이 초대한 매장 (${invited.length}곳)</h3>
-      ${listHTML}
-      <div style="text-align:center;margin-top:20px;">
-        <button onclick="document.getElementById('modalOverlay').style.display='none';document.getElementById('invitedModal').style.display='none';" 
-                style="padding:10px 30px;background:#3366ff;color:white;border:none;border-radius:8px;cursor:pointer;">
-          닫기
-        </button>
-      </div>
-    `;
-    document.getElementById('modalOverlay').style.display = 'block';
-    document.getElementById('invitedModal').style.display = 'block';
-  };
-
-  // 지도 중심 맞추기
-  const bounds = new maptilersdk.LngLatBounds();
-  stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
-  map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
+// 지도 중심 맞추기
+const bounds = new maplibregl.LngLatBounds();
+stores.forEach(s => bounds.extend([s.longitude, s.latitude]));
+map.fitBounds(bounds, { padding: 100, maxZoom: 15, duration: 2000 });
 </script>
 </body>
 </html>
